@@ -4,7 +4,7 @@ This repository is for the novel contracts built and deployed by Xenbox Games. W
 Testing Deployment on Goerli: 
 0x6eD1AFB977BDD535EFc53639766F075B038cDBe2
 
--------------------------------------------------------------------- First Deployments on the blockchain:-------------------------------------------------------------------- 
+------------------------------------First Deployments on the blockchain:------------------------------------
 
 Deployed on BSC
 0xaB803C683000C3Ab8836477B0e2BDC45C20139d1
@@ -24,7 +24,8 @@ Deployed on Fantom
 Deployed on Dogechain
 0x397F4F56Ac8B47170D5Ed13C29d9Bb3dE119C9A2
 
--------------------------------------------------------------------- Community Inspired Depolyments on the blockchain (current contracts)-------------------------------------------------------------------- 
+------------------------------------ Community Inspired Depolyments on the blockchain (current contracts) ------------------------------------
+
 Xenomorph deployed on Goerli: 
 0x6eD1AFB977BDD535EFc53639766F075B038cDBe2
 
