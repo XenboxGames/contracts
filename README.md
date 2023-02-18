@@ -1,5 +1,5 @@
 # contracts
-This repository are for the novel contracts built and deployed by Xenbox Games. We build from scratch
+This repository is for the novel contracts built and deployed by Xenbox Games. We build from scratch
 
 Testing Deployment on Goerli: 
 0x6eD1AFB977BDD535EFc53639766F075B038cDBe2
