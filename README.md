@@ -27,5 +27,31 @@ Deployed on Dogechain
 
 ------------------------------------ Community Inspired Depolyments on the blockchain (current contracts) ------------------------------------
 
+Xenomorph deployed on BSC Testnet: 
+0x1Fa03219ff837C1Dfc629c5A8F834E47594fa1fd
+
+Deployed on Ethereum POW
+0xbE26470C4ab73E11e6F0157Bc3eD70D72C79Be98
+
+Deployed on Moonbeam
+0x9c53081A7D4597A1De689ac137421997e5E9129a
+
+Deployed on Okexchain
+0x397F4F56Ac8B47170D5Ed13C29d9Bb3dE119C9A2
+
+Deployed on Fantom
+0xEFCE99D5eDa18e461FC48B2aDb7d3416eEC984BF
+
+Deployed on Dogechain
+0x653fE095C143EEd47f1b945410c691f6232a1E25
+
+Depolyed on Evmos
+0xdb19658C1311eDA4a79B34C7A4D5aC472a394f8F
+
+Deployed on Polygon Matic
+0xbE26470C4ab73E11e6F0157Bc3eD70D72C79Be98
+
+Deployed on BSC
+0xF897D3deE5EeEAD760e179521b5Bf124620e8C34
 
 
