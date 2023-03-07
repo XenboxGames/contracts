@@ -57,8 +57,8 @@ Deployed on BSC
 ------------------------------------ The Xenbox Token Minter (current contracts) ------------------------------------
 
 XENBOX (XBOX) token on testnet (bsc)
-0x4528b7B2449AA08034F3e5B83F820929df3B9881
+
 
 XENBOX (XBOX) token on Ethereum POW
-0x32F6101795Ca1fFf884083783539fA6047089Ea1
+
 
