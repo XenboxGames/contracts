@@ -57,13 +57,14 @@ Deployed on BSC
 ------------------------------------ The Xenbox Token Minter (current contracts) ------------------------------------
 
 XENBOX (XBOX) token on testnet (bsc)
-
+0x921DD944493d057D13c4f76ecEE4DD75307C4145
 
 XENBOX (XBOX) token on Ethereum POW
 
 ------------------------------------ iBurnable Executors (current contracts) ------------------------------------
 
 IBurnable Executor on testnet (bsc)
+0x2d132039Dc5224C0192E9AdB49De3B79da6cfE10
 
 IBurnable Executor on Ethereum POW 
 
