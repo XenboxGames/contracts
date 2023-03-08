@@ -60,7 +60,7 @@ XENBOX (XBOX) token on testnet (bsc)
 0x921DD944493d057D13c4f76ecEE4DD75307C4145
 
 XENBOX (XBOX) token on Ethereum POW
-
+0x2f51f1930605881145602E125c75434042944cF0
 ------------------------------------ iBurnable Executors (current contracts) ------------------------------------
 
 IBurnable Executor on testnet (bsc)
