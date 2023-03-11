@@ -171,6 +171,14 @@ contract Incentivizer is Ownable, ReentrancyGuard {
         duration = _InWeeks * 1 weeks;
     }
 
+    function setXenboxToken(address _xenboxToken) external onlyOwner {
+        xenboxToken = IERC20(_xenboxToken);
+    }
+
+    function setPayToken(address _payToken) external onlyOwner {
+        payToken = IERC20(_payToken);
+    }
+
     event Pause();
     function pause() public onlyOwner {
         require(msg.sender == owner(), "Only Deployer.");
