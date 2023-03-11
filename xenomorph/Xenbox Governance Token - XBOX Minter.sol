@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// @title Xenomorph NFT Game by OxSorcerer | Battousai Nakamoto | DarcViper for Xenbox Games
+// By OxSorcerer | Battousai Nakamoto | DarcViper for Xenbox Games
 // https://twitter.com/0xSorcerers | https://github.com/Dark-Viper | https://t.me/Oxsorcerer | https://t.me/battousainakamoto | https://t.me/darcViper
 
 pragma solidity ^0.8.17;
