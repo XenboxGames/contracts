@@ -29,11 +29,11 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     uint256 public requiredAmount = 2000000 ether;
     uint256 public hatchingAmount = 20000000 ether;
     uint256 private divisor = 1 ether;
-    uint256 public TotalContractBurns = 0;
+    uint256 public TotalContractTransfers = 0;
     uint256 BattlesTotal = 0; 
     using Strings for uint256;
     string public baseURI;
-    address public guard; 
+    address private guard; 
     string public Author = "0xSorcerer | Battousai Nakamoto | Dark-Viper";
     bool public paused = false;  
 
@@ -139,7 +139,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         IERC20 paytoken;
         paytoken = tokens.paytoken;               
         paytoken.transfer(bobbAddress, burnAmount); 
-        TotalContractBurns += burnAmount;       
+        TotalContractTransfers += burnAmount;       
     }
     
     function transferTokens(uint256 _cost) internal {
@@ -372,14 +372,14 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         paytoken.transfer(msg.sender, _amount);
     }
 
-    address payable developmentAddress;
+    address payable public developmentAddress;
 
     function setDevelopmentAddress(address payable _developmentAddress) public onlyOwner {
         require(msg.sender == owner(), "Not Owner.");
         developmentAddress = _developmentAddress;
     }
 
-    address payable bobbAddress;
+    address payable public bobbAddress;
 
     function setBobbAddress (address payable _bobbAddress) public onlyOwner {
         require(msg.sender == owner(), "Not Owner.");
