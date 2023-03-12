@@ -14,9 +14,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {        
-        constructor(string memory _name, string memory _symbol) 
+        constructor(string memory _name, string memory _symbol, address _newGuard) 
             ERC721(_name, _symbol)
-        {}
+        {
+            guard = _newGuard;
+        }
     using Math for uint256;
     using ABDKMath64x64 for uint256;    
     using SafeERC20 for IERC20;  
@@ -31,8 +33,14 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     uint256 BattlesTotal = 0; 
     using Strings for uint256;
     string public baseURI;
+    address public guard; 
     string public Author = "0xSorcerer | Battousai Nakamoto | Dark-Viper";
     bool public paused = false;  
+
+    modifier onlyGuard() {
+        require(msg.sender == guard, "Not authorized.");
+        _;
+    }
 
     struct Player {
         string name;
@@ -432,7 +440,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
 
     event Pause();
-    function pause() public onlyOwner {
+    function pause() public onlyGuard {
         require(msg.sender == owner(), "Only Deployer.");
         require(!paused, "Contract already paused.");
         paused = true;
@@ -440,7 +448,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
 
     event Unpause();
-    function unpause() public onlyOwner {
+    function unpause() public onlyGuard {
         require(msg.sender == owner(), "Only Deployer.");
         require(paused, "Contract not paused.");
         paused = false;
@@ -579,5 +587,9 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         } else {
         VotePassed = "NOT PASSED";
         }
-    }  
+    } 
+
+    function setGuard (address _newGuard) external onlyGuard {
+        guard = _newGuard;
+    }
 }
