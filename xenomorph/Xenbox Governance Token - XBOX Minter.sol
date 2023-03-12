@@ -21,7 +21,7 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
 
     bool public paused = false;
-    address public guard;
+    address private guard;
     uint256 public CIRC_SUPPLY = 0;
     uint256 public MAX_SUPPLY = 5000000000 * 10 ** decimals();
 
