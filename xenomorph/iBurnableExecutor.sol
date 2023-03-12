@@ -17,7 +17,7 @@ contract iBurnableExecutor is Ownable, IBurnRedeemable, IERC165 {
     uint256 public TotalBurns;
     address public xen;
     address public custodian;
-    address public guard;
+    address private guard;
 
     modifier onlyBurner() {
         require(msg.sender == xen, "Not authorized.");
