@@ -19,7 +19,8 @@ contract Incentivizer is Ownable, ReentrancyGuard {
     uint256 public numberOfParticipants = 0;
     uint256 public duration = 2 weeks;
     uint256 public TotalXenboxSent;
-    uint256 public currentEra = 0; 
+    uint256 public currentEra = 0;
+    address public guard; 
     bool public paused = false; 
 
     mapping(address => uint256) public balances;
@@ -46,11 +47,18 @@ contract Incentivizer is Ownable, ReentrancyGuard {
     
     constructor(
         address _xenboxToken,
-        address _payToken
+        address _payToken,
+        address _newGuard
     ) {
         xenboxToken = IERC20(_xenboxToken);
         payToken = IERC20(_payToken);
+        guard = _newGuard;
         startTime = block.timestamp;
+    }
+
+    modifier onlyGuard() {
+        require(msg.sender == guard, "Not authorized.");
+        _;
     }
 
     function addXenbox(uint256 _amount) external nonReentrant {
@@ -180,7 +188,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
     }
 
     event Pause();
-    function pause() public onlyOwner {
+    function pause() public onlyGuard {
         require(msg.sender == owner(), "Only Deployer.");
         require(!paused, "Contract already paused.");
         paused = true;
@@ -188,11 +196,14 @@ contract Incentivizer is Ownable, ReentrancyGuard {
     }
 
     event Unpause();
-    function unpause() public onlyOwner {
+    function unpause() public onlyGuard {
         require(msg.sender == owner(), "Only Deployer.");
         require(paused, "Contract not paused.");
         paused = false;
         emit Unpause();
-    } 
+    }
 
+    function setGuard (address _newGuard) external onlyGuard {
+        guard = _newGuard;
+    }
 }
