@@ -20,7 +20,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
     uint256 public duration = 2 weeks;
     uint256 public TotalXenboxSent;
     uint256 public currentEra = 0;
-    address public guard; 
+    address private guard; 
     bool public paused = false; 
 
     mapping(address => uint256) public balances;
