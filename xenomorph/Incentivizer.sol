@@ -17,6 +17,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
     uint256 public rewardPerStamp;
     uint256 public numberOfParticipants = 0;
     uint256 public Duration = 1209600;
+    uint256 public timeLock = 24 hours;
     uint256 public TotalXenboxSent = 1;
     uint256 private divisor = 100 ether;
     address private guard; 
@@ -24,6 +25,8 @@ contract Incentivizer is Ownable, ReentrancyGuard {
 
     mapping(address => uint256) public balances;
     mapping(address => Claim) public claimRewards;
+    mapping(address => uint256) public entryMap;
+    mapping(address => uint256) public UserClaims;
 
     address[] public participants;
 
@@ -54,6 +57,17 @@ contract Incentivizer is Ownable, ReentrancyGuard {
         _;
     }
 
+    modifier onlyAfterTimelock() {             
+        require(entryMap[msg.sender] + timeLock < block.timestamp, "Timelocked.");
+        _;
+    }
+
+    modifier onlyClaimant() {             
+        require(UserClaims[msg.sender] + timeLock < block.timestamp, "Timelocked.");
+        require(claimRewards[msg.sender].rewardsOwed > 0, "No rewards.");
+        _;
+    }
+
     function addXenbox(uint256 _amount) public nonReentrant {
         require(!paused, "Contract is paused.");
         require(_amount > 0, "Amount must be greater than zero.");
@@ -63,6 +77,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
         uint256 currentBalance = balances[msg.sender];
         uint256 newBalance = currentBalance + _amount;
         balances[msg.sender] = newBalance;
+        entryMap[msg.sender] = block.timestamp; // record the user's entry timestamp
 
         if (currentBalance == 0) {
             numberOfParticipants += 1;
@@ -81,7 +96,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
     /**
     * @dev Allows the user to withdraw their xenbox tokens
     */
-    function withdrawXenbox() public nonReentrant {
+    function withdrawXenbox() public nonReentrant onlyAfterTimelock {
         require(!paused, "Contract already paused.");
         require(balances[msg.sender] > 0, "No xenbox tokens to withdraw.");
         uint256 xenboxAmount = balances[msg.sender];
@@ -98,6 +113,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
 
         if (numberOfParticipants > 0) {
             numberOfParticipants -= 1;
+            entryMap[msg.sender] = 0; // reset the user's entry timestamp
         }
         
         emit WithdrawXenbox(msg.sender, xenboxAmount);
@@ -131,7 +147,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
         rewardPerStamp = (totalRewards * divisor) / (TotalXenboxSent * Duration);
     }
 
-    function claim() public nonReentrant {  
+    function claim() public nonReentrant onlyClaimant {  
         require(!paused, "Contract already paused."); 
         updateAllClaims();     
         Claim storage claimData = claimRewards[msg.sender];
@@ -140,7 +156,8 @@ contract Incentivizer is Ownable, ReentrancyGuard {
         claimData.rewardsOwed = 0;
         totalClaimedRewards += rewards;
         totalRewards -= rewards;
-        updateRewardPerStamp();        
+        updateRewardPerStamp(); 
+        UserClaims[msg.sender] = block.timestamp; // record the user's claim timestamp       
         emit RewardClaimedByUser(msg.sender, rewards);
     }
 
@@ -155,13 +172,16 @@ contract Incentivizer is Ownable, ReentrancyGuard {
         }
         totalRewards -= amount;
         updateRewardPerStamp();
-
     }
 
-    function setDuration(uint256 _secs) external onlyOwner {
-        Duration = _secs;
+    function setDuration(uint256 _seconds) external onlyOwner {
+        Duration = _seconds;
         updateAllClaims();
         updateRewardPerStamp();
+    }
+
+    function setTimeLock(uint256 _seconds) external onlyOwner {
+        timeLock = _seconds;
     }
 
     function setXenboxToken(address _xenboxToken) external onlyOwner {
