@@ -177,7 +177,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         require(!paused, "Paused Contract");
         require(players[_tokenId].hatch > 0, "Hatch Xenomorph");
         require(msg.sender == ownerOf(_tokenId), "Not your Xenomorph");
-        require(players[_tokenId].id != 0, "Invalid");
+        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found!");
         uint256 cost;
         cost = requiredAmount;        
         //Transfer Required Tokens to Weaponize Xenomorph
@@ -189,8 +189,9 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     } 
 
     function regenerate (uint256 _tokenId) public payable nonReentrant {
+        require(!paused, "Paused Contract");
         require(msg.sender == ownerOf(_tokenId), "Not your Xenomorph");
-        require(players[_tokenId].id != 0, "Invalid");
+        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found!");
         require(players[_tokenId].hatch > 0, "Hatch Xenomorph");        
         uint256 cost;
         cost = requiredAmount;
@@ -353,9 +354,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         lastReset[_playerId] = block.timestamp;
     }
     
-    function changeOwner(address newOwner) public onlyOwner {
-        // Require that the caller is the current owner of the contract
-        require(msg.sender == owner(), "Not owner.");
+    function changeOwner(address newOwner) external onlyGuard {
         // Update the owner to the new owner
         transferOwnership(newOwner);
     }
