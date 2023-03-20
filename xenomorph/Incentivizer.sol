@@ -85,7 +85,7 @@ contract Incentivizer is Ownable, ReentrancyGuard {
         } else {
             updateAllClaims();
         }
-        
+    
         claimData.eraAtBlock = block.timestamp;
         claimData.xenboxSent += _amount;
         TotalXenboxSent += _amount;
