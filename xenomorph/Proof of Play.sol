@@ -22,7 +22,7 @@ interface IXenomorphic {
     }
 
     function getPlayers() external view returns (Player[] memory);
-    function getPlayerOwners(address _user) external returns (uint256[] memory);
+    function getPlayerOwners(address _user) external returns (Player[] memory);
 }
 
 /**
@@ -30,23 +30,23 @@ interface IXenomorphic {
  */
 contract ProofOfPlay is Ownable, ReentrancyGuard {
     IERC20 public xenboxToken;
-    uint256 public totalRewards = 1;
+    uint256 public totalRewards;
     uint256 public totalClaimedRewards;
     uint256 public multiplier = 10;
     uint256 public bonus = 1;
     uint256 public timeLock = 24 hours;
-    uint256 private divisor = 100 ether;
+    uint256 private divisor = 1 ether;
     address private guard; 
     address public xenomorph;
     bool public paused = false; 
 
-    address[] public Participants;
     // Declare the ActiveMiners array
     uint256 public activeMinersLength;
 
     mapping(uint256 => IXenomorphic.Player) public ActiveMiners;
-    mapping(address => uint256[]) public AllOwners;
     mapping(uint256 => Miner) public Collectors;
+    mapping(uint256 => uint256) public MinerClaims;
+
 
     struct Miner {
         string name;
@@ -72,65 +72,80 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         xenomorph = _xenomorph;
         guard = _newGuard;
     }
-    
-    using ABDKMath64x64 for uint256;
+
+    using ABDKMath64x64 for uint256;  
 
     modifier onlyGuard() {
         require(msg.sender == guard, "Not authorized.");
         _;
     }
 
-    function getMinerData() public nonReentrant {
-        IXenomorphic.Player[] memory players = IXenomorphic(xenomorph).getPlayers();
-        activeMinersLength = players.length;
+    // function getMinerData() public nonReentrant {
+    //     IXenomorphic.Player[] memory players = IXenomorphic(xenomorph).getPlayers();
+    //     activeMinersLength = players.length;
 
-        for (uint256 i = 0; i < players.length; i++) {
-            ActiveMiners[i] = players[i];
-        }
-    } 
+    //     for (uint256 i = 0; i < players.length; i++) {
+    //         ActiveMiners[i] = players[i];
+    //     }
+    // }
 
     function getActiveMiner(uint256 index) public view returns (IXenomorphic.Player memory) {
         require(index < activeMinersLength, "Index out of range.");
         return ActiveMiners[index];
     }
 
-    function getOwnerData() public nonReentrant {
-        uint256[] memory tokenIds = IXenomorphic(xenomorph).getPlayerOwners(msg.sender);
-        AllOwners[msg.sender] = tokenIds;
+    uint256 public testValue;
+
+    function getOwnerData(uint256 _tokenId) internal returns (bool) {        
+    // Get the Player structs owned by the msg.sender
+    IXenomorphic.Player[] memory owners = IXenomorphic(xenomorph).getPlayerOwners(msg.sender);
+    
+    // Initialize testValue as 2 (false)
+    testValue = 2;
+
+    // Iterate through the stored Player structs and compare the _tokenId with the id of each Player struct
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (owners[i].id == _tokenId) {
+                // Set testValue to 5 (true) and return true
+                testValue = 5;
+                return true;
+            }
+        }
+        return false;
     }
 
     function mineXenbox(uint256 _tokenId) public nonReentrant {
         require(!paused, "Paused Contract");
-        getMinerData();
-        getOwnerData();
-        // Check if the _tokenId is present in the AllOwners[msg.sender] mapping
-        bool verified = false;
-        uint256[] memory ownedTokenIds = AllOwners[msg.sender];
-        for (uint256 i = 0; i < ownedTokenIds.length; i++) {
-            if (ownedTokenIds[i] == _tokenId) {
-                verified = true;
-                break;
-            }
-        }
-        require(verified, "Not Owner!");
-        require(_tokenId > 0 && _tokenId <= activeMinersLength, "Not Found!");         
+        require(MinerClaims[_tokenId] + timeLock < block.timestamp, "Timelocked.");
+
+        // getMinerData();         
+        IXenomorphic.Player[] memory players = IXenomorphic(xenomorph).getPlayers();
+                activeMinersLength = players.length;
+
+                for (uint256 i = 0; i < players.length; i++) {
+                    ActiveMiners[i] = players[i];
+                }
+
         require(ActiveMiners[_tokenId].hatch > 1, "Hatchup Required");
-        require(ActiveMiners[_tokenId].level > 0, "Levelup Required");
+            
+        require(getOwnerData(_tokenId), "Not Owner!");
 
         uint256 hatch = ActiveMiners[_tokenId].hatch * 10 * bonus;
         uint256 level = (ActiveMiners[_tokenId].level - Collectors[_tokenId].level) * bonus;
         uint256 fights = (ActiveMiners[_tokenId].fights - Collectors[_tokenId].fights) * bonus;
         uint256 wins = (ActiveMiners[_tokenId].wins - Collectors[_tokenId].wins) * bonus;
         uint256 history = (ActiveMiners[_tokenId].history - Collectors[_tokenId].history) * bonus;
-        uint256 rewards = hatch * multiplier + (level + fights + wins + history);
-        
-        //Check the contract for adequate withdrawal balance
+        uint256 rewards = (hatch * multiplier + (level + fights + wins + history)) * divisor;
+
+        // Check the contract for adequate withdrawal balance
         require(xenboxToken.balanceOf(address(this)) > rewards, "Not Enough Reserves");      
         // Transfer the rewards amount to the miner
         require(xenboxToken.transfer(msg.sender, rewards), "Failed Transfer.");
 
         getCollectors(_tokenId);
-        
+
+        MinerClaims[_tokenId] = block.timestamp; // record the miner's claim timestamp       
+
         emit RewardClaimedByMiner(msg.sender, rewards);
     }
 
@@ -153,6 +168,9 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         );
     }
 
+    function setTimeLock(uint256 _seconds) external onlyOwner {
+        timeLock = _seconds;
+    }
 
     function setMultiplier (uint256 _multiples) external onlyOwner() {
         multiplier = _multiples;
@@ -162,6 +180,9 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         bonus = _multiples;
     }
 
+    function setGuard (address _newGuard) external onlyGuard {
+        guard = _newGuard;
+    }
 
     event Pause();
     function pause() public onlyGuard {
