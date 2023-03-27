@@ -148,7 +148,7 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         emit RewardClaimedByMiner(msg.sender, rewards);
     }
 
-    function getCollectors(uint256 _tokenId) internal {
+    function getCollectors(uint256 _tokenId) public nonReentrant {
         // Read the miner data from the ActiveMiners mapping
         IXenomorphic.Player memory activeMiner = ActiveMiners[_tokenId];
 
