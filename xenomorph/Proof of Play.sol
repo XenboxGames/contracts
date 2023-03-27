@@ -175,7 +175,7 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         multiplier = _multiples;
     }
 
-    function setBonus (uint256 _hatch, uint256 _level, uint256 _wins, uint256 _fights, uint256 _history) external onlyOwner() {
+    function setBonuses (uint256 _hatch, uint256 _level, uint256 _wins, uint256 _fights, uint256 _history) external onlyOwner() {
         hatchbonus = _hatch;
         levelbonus = _level;
         winsbonus = _wins;
