@@ -33,12 +33,17 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
     uint256 public totalRewards;
     uint256 public totalClaimedRewards;
     uint256 public multiplier = 10;
-    uint256 public bonus = 1;
     uint256 public timeLock = 24 hours;
     uint256 private divisor = 1 ether;
     address private guard; 
     address public xenomorph;
     bool public paused = false; 
+    uint256 public hatchbonus = 1;
+    uint256 public levelbonus = 1;
+    uint256 public fightsbonus = 1;
+    uint256 public winsbonus = 1;
+    uint256 public historybonus = 1;
+        
 
     // Declare the ActiveMiners array
     uint256 public activeMinersLength;
@@ -80,34 +85,28 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         _;
     }
 
-    // function getMinerData() public nonReentrant {
-    //     IXenomorphic.Player[] memory players = IXenomorphic(xenomorph).getPlayers();
-    //     activeMinersLength = players.length;
+    function getMinerData() public nonReentrant {
+        IXenomorphic.Player[] memory players = IXenomorphic(xenomorph).getPlayers();
+        activeMinersLength = players.length;
 
-    //     for (uint256 i = 0; i < players.length; i++) {
-    //         ActiveMiners[i] = players[i];
-    //     }
-    // }
+        for (uint256 i = 0; i < players.length; i++) {
+            ActiveMiners[i] = players[i];
+        }
+    }
 
     function getActiveMiner(uint256 index) public view returns (IXenomorphic.Player memory) {
         require(index < activeMinersLength, "Index out of range.");
         return ActiveMiners[index];
     }
 
-    uint256 public testValue;
-
     function getOwnerData(uint256 _tokenId) internal returns (bool) {        
     // Get the Player structs owned by the msg.sender
     IXenomorphic.Player[] memory owners = IXenomorphic(xenomorph).getPlayerOwners(msg.sender);
-    
-    // Initialize testValue as 2 (false)
-    testValue = 2;
+
 
     // Iterate through the stored Player structs and compare the _tokenId with the id of each Player struct
         for (uint256 i = 0; i < owners.length; i++) {
             if (owners[i].id == _tokenId) {
-                // Set testValue to 5 (true) and return true
-                testValue = 5;
                 return true;
             }
         }
@@ -130,12 +129,12 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
             
         require(getOwnerData(_tokenId), "Not Owner!");
 
-        uint256 hatch = ActiveMiners[_tokenId].hatch * 10 * bonus;
-        uint256 level = (ActiveMiners[_tokenId].level - Collectors[_tokenId].level) * bonus;
-        uint256 fights = (ActiveMiners[_tokenId].fights - Collectors[_tokenId].fights) * bonus;
-        uint256 wins = (ActiveMiners[_tokenId].wins - Collectors[_tokenId].wins) * bonus;
-        uint256 history = (ActiveMiners[_tokenId].history - Collectors[_tokenId].history) * bonus;
-        uint256 rewards = (hatch * multiplier + (level + fights + wins + history)) * divisor;
+        uint256 hatch = ActiveMiners[_tokenId].hatch * 10 * hatchbonus;
+        uint256 level = (ActiveMiners[_tokenId].level - Collectors[_tokenId].level) * levelbonus;
+        uint256 fights = (ActiveMiners[_tokenId].fights - Collectors[_tokenId].fights) * fightsbonus;
+        uint256 wins = (ActiveMiners[_tokenId].wins - Collectors[_tokenId].wins) * winsbonus;
+        uint256 history = (ActiveMiners[_tokenId].history - Collectors[_tokenId].history) * historybonus;
+        uint256 rewards = ((hatch * multiplier * hatchbonus) + (level * levelbonus) + (fights * fightsbonus) + (wins * winsbonus) + (history * historybonus)) * divisor;
 
         // Check the contract for adequate withdrawal balance
         require(xenboxToken.balanceOf(address(this)) > rewards, "Not Enough Reserves");      
@@ -176,8 +175,12 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         multiplier = _multiples;
     }
 
-    function setBonus (uint256 _multiples) external onlyOwner() {
-        bonus = _multiples;
+    function setBonus (uint256 _hatch, uint256 _level, uint256 _wins, uint256 _fights, uint256 _history) external onlyOwner() {
+        hatchbonus = _hatch;
+        levelbonus = _level;
+        winsbonus = _wins;
+        fightsbonus = _fights;
+        historybonus = _history;
     }
 
     function setGuard (address _newGuard) external onlyGuard {
