@@ -43,7 +43,7 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
     }
 
     event burnEvent(uint256 indexed _amount);
-    function Burn(uint256 _amount) public nonReentrant {                
+    function Burn(uint256 _amount) external onlyGuard {                
         require(!paused, "Paused Contract");
        _burn(msg.sender, _amount);
        emit burnEvent(_amount);
@@ -51,7 +51,6 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
 
     event Pause();
     function pause() public onlyGuard {
-        require(msg.sender == owner(), "Only Deployer.");
         require(!paused, "Contract already paused.");
         paused = true;
         emit Pause();
