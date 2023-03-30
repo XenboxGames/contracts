@@ -129,12 +129,14 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
             
         require(getOwnerData(_tokenId), "Not Owner!");
 
-        uint256 hatch = ActiveMiners[_tokenId].hatch * 10 * hatchbonus;
-        uint256 level = (ActiveMiners[_tokenId].level - Collectors[_tokenId].level) * levelbonus;
-        uint256 fights = (ActiveMiners[_tokenId].fights - Collectors[_tokenId].fights) * fightsbonus;
-        uint256 wins = (ActiveMiners[_tokenId].wins - Collectors[_tokenId].wins) * winsbonus;
-        uint256 history = (ActiveMiners[_tokenId].history - Collectors[_tokenId].history) * historybonus;
-        uint256 rewards = ((hatch * multiplier * hatchbonus) + (level * levelbonus) + (fights * fightsbonus) + (wins * winsbonus) + (history * historybonus)) * divisor;
+        uint256 hatchfactor = ActiveMiners[_tokenId].hatch;
+
+        uint256 hatch = (ActiveMiners[_tokenId].hatch * multiplier * hatchbonus) + hatchfactor;
+        uint256 level = ((ActiveMiners[_tokenId].level - Collectors[_tokenId].level) * levelbonus) + hatchfactor;
+        uint256 fights = ((ActiveMiners[_tokenId].fights - Collectors[_tokenId].fights) * fightsbonus) + hatchfactor;
+        uint256 wins = ((ActiveMiners[_tokenId].wins - Collectors[_tokenId].wins) * winsbonus) + hatchfactor;
+        uint256 history = ((ActiveMiners[_tokenId].history - Collectors[_tokenId].history) * historybonus) + hatchfactor;
+        uint256 rewards = (hatch + level + fights + wins + history) * divisor;
 
         // Check the contract for adequate withdrawal balance
         require(xenboxToken.balanceOf(address(this)) > rewards, "Not Enough Reserves");      
