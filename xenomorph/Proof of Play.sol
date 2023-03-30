@@ -38,10 +38,10 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
     address private guard; 
     address public xenomorph;
     bool public paused = false; 
-    uint256 public hatchbonus = 1;
-    uint256 public levelbonus = 1;
-    uint256 public fightsbonus = 1;
-    uint256 public winsbonus = 1;
+    uint256 public hatchbonus = 5;
+    uint256 public levelbonus = 4;
+    uint256 public fightsbonus = 2;
+    uint256 public winsbonus = 3;
     uint256 public historybonus = 1;
         
 
