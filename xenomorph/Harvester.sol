@@ -174,9 +174,9 @@ contract Harvester is Ownable, ReentrancyGuard {
         updateRewardPerStamp();
     }
 
-    function setDuration(uint256 _seconds) external onlyOwner {
-        Duration = _seconds;
+    function setDuration(uint256 _seconds) external onlyOwner {        
         updateAllClaims();
+        Duration = _seconds;
         updateRewardPerStamp();
     }
 
