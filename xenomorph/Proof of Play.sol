@@ -30,7 +30,6 @@ interface IXenomorphic {
  */
 contract ProofOfPlay is Ownable, ReentrancyGuard {
     IERC20 public xenboxToken;
-    uint256 public totalRewards;
     uint256 public totalClaimedRewards;
     uint256 public multiplier = 10;
     uint256 public timeLock = 24 hours;
@@ -40,8 +39,8 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
     bool public paused = false; 
     uint256 public hatchbonus = 5;
     uint256 public levelbonus = 4;
-    uint256 public fightsbonus = 2;
     uint256 public winsbonus = 3;
+    uint256 public fightsbonus = 2;
     uint256 public historybonus = 1;
         
 
@@ -114,10 +113,17 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
     }
 
     function mineXenbox(uint256 _tokenId) public nonReentrant {
+        //Require Contract isn't paused
         require(!paused, "Paused Contract");
+        //Require Token Ownership    
+        require(getOwnerData(_tokenId), "Not Owner!");
+        //Require Miner hasn't claimed within 24hrs
         require(MinerClaims[_tokenId] + timeLock < block.timestamp, "Timelocked.");
 
-        // getMinerData();         
+
+    // if statement may work here 
+     if (ActiveMiners[_tokenId].hatch > 1) {
+            //Reorg ActiveMiners array
         IXenomorphic.Player[] memory players = IXenomorphic(xenomorph).getPlayers();
                 activeMinersLength = players.length;
 
@@ -125,13 +131,9 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
                     ActiveMiners[i] = players[i];
                 }
 
-        require(ActiveMiners[_tokenId].hatch > 1, "Hatchup Required");
-            
-        require(getOwnerData(_tokenId), "Not Owner!");
-
-        uint256 hatchfactor = ActiveMiners[_tokenId].hatch;
-
-        uint256 hatch = (ActiveMiners[_tokenId].hatch * multiplier * hatchbonus) + hatchfactor;
+        //Calculate Rewards
+        uint256 hatchfactor = ActiveMiners[_tokenId].hatch * hatchbonus;
+        uint256 hatch = ActiveMiners[_tokenId].hatch * multiplier;
         uint256 level = ((ActiveMiners[_tokenId].level - Collectors[_tokenId].level) * levelbonus) + hatchfactor;
         uint256 fights = ((ActiveMiners[_tokenId].fights - Collectors[_tokenId].fights) * fightsbonus) + hatchfactor;
         uint256 wins = ((ActiveMiners[_tokenId].wins - Collectors[_tokenId].wins) * winsbonus) + hatchfactor;
@@ -142,15 +144,21 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         require(xenboxToken.balanceOf(address(this)) > rewards, "Not Enough Reserves");      
         // Transfer the rewards amount to the miner
         require(xenboxToken.transfer(msg.sender, rewards), "Failed Transfer.");
-
+        //Register claim
         getCollectors(_tokenId);
-
-        MinerClaims[_tokenId] = block.timestamp; // record the miner's claim timestamp       
-
+        //Register claim timestamp
+        MinerClaims[_tokenId] = block.timestamp; // record the miner's claim timestamp
+        //TotalClaimedRewards
+        totalClaimedRewards += rewards;       
+        //emit event
         emit RewardClaimedByMiner(msg.sender, rewards);
+     } else {
+        require(ActiveMiners[_tokenId].attack > 10, "Hatchup Required");
+     }
+ 
     }
 
-    function getCollectors(uint256 _tokenId) internal nonReentrant {
+    function getCollectors(uint256 _tokenId) internal {
         // Read the miner data from the ActiveMiners mapping
         IXenomorphic.Player memory activeMiner = ActiveMiners[_tokenId];
 
