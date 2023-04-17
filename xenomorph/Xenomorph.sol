@@ -13,10 +13,15 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+interface Iburn {
+    function Burn(uint256 _amount) external;
+}
+
 contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {        
-        constructor(string memory _name, string memory _symbol, address _newGuard) 
+        constructor(string memory _name, string memory _symbol, address xboAddress, address _newGuard) 
             ERC721(_name, _symbol)
         {
+            xbo = xboAddress;
             guard = _newGuard;
         }
     using Math for uint256;
@@ -31,16 +36,22 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     uint256 public hatchingAmount = 20000000 ether;
     uint256 private divisor = 1 ether;
     uint256 public TotalContractTransfers = 0;
-    uint256 public TotalXBOTransfers = 0;    
+    uint256 public TotalXBOBurns = 0;    
     uint256 BattlesTotal = 0; 
     using Strings for uint256;
     string public baseURI;
     address private guard; 
+    address public xbo;
     string public Author = "0xSorcerer | Battousai Nakamoto | Dark-Viper";
     bool public paused = false;  
 
     modifier onlyGuard() {
         require(msg.sender == guard, "Not authorized.");
+        _;
+    }
+
+    modifier onlyBurner() {
+        require(msg.sender == xbo, "Not authorized.");
         _;
     }
 
@@ -123,6 +134,11 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         charge = _charge;
     }
 
+    function setXboAddress (address _xboAddress) external onlyOwner {
+        require(msg.sender == owner(), "Not Owner.");
+        xbo = _xboAddress;
+    }
+
     function updateMintFee(uint256 _mintFee) external onlyOwner() {
         mintFee = _mintFee;
     }
@@ -152,9 +168,11 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     function burnXBO(uint256 _burnAmount) internal {
         TokenInfo storage tokens = AllowedCrypto[_pay];
         IERC20 paytoken;
-        paytoken = tokens.paytoken;               
-        paytoken.transfer(bobbAddress, _burnAmount); 
-        TotalXBOTransfers += _burnAmount;       
+        paytoken = tokens.paytoken;
+        paytoken.transferFrom(msg.sender, address(this), _burnAmount);
+        // Call the Burn function from the Xenbox contract
+        Iburn(xbo).Burn(_burnAmount);
+        TotalXBOBurns += _burnAmount;       
     }
     
     function transferTokens(uint256 _cost) internal {
@@ -243,10 +261,10 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         BattlesTotal++;
         // stealing Points
         uint256 stolenPoints;
-        if(players[attackerId].attack >= (players[defenderId].defence + 300) 
+        if(players[attackerId].level > players[defenderId].level
         && players[defenderId].attack >= 20) {
             stolenPoints = 20;
-        } else if (players[attackerId].level > players[defenderId].level 
+        } else if (players[attackerId].attack >= (players[defenderId].defence + 300)
         && players[defenderId].attack >= 20) {
             stolenPoints = 20;
         } else {
@@ -306,12 +324,12 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         // update the fightTimestamps record
         fightTimestamps[attackerId][defenderId] = block.timestamp;        
         BattlesTotal++;
-        // stealing Points
+        // stealing Points 
         uint256 stolenPoints;
-        if(players[attackerId].defence >= (players[defenderId].attack + 300) 
+        if(players[attackerId].level > players[defenderId].level
         && players[defenderId].defence >= 20) {
             stolenPoints = 20;            
-        } else if (players[attackerId].level > players[defenderId].level
+        } else if (players[attackerId].defence >= (players[defenderId].attack + 300)
         && players[defenderId].defence >= 20) {
             stolenPoints = 20;
         } else {
