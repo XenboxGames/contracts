@@ -26,10 +26,12 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     uint256 COUNTER = 0;
     uint256 public mintFee = 0.00001 ether;
     uint256 public _pid = 0;
+    uint256 public _pay = 1;
     uint256 public requiredAmount = 2000000 ether;
     uint256 public hatchingAmount = 20000000 ether;
     uint256 private divisor = 1 ether;
     uint256 public TotalContractTransfers = 0;
+    uint256 public TotalXBOTransfers = 0;    
     uint256 BattlesTotal = 0; 
     using Strings for uint256;
     string public baseURI;
@@ -112,17 +114,22 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     function updateName(uint256 _tokenId, string memory _newName) public nonReentrant {
        require(msg.sender == ownerOf(_tokenId), "Not Your Xenomorph.");
        require(bytes(_newName).length > 0, "No Name");
-       require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found!");
+       require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found");
         // Update the name in the players mapping
         players[_tokenId].name = string(_newName);
+    }
+
+    function setCharge(uint256 _charge) external onlyOwner() {
+        charge = _charge;
     }
 
     function updateMintFee(uint256 _mintFee) external onlyOwner() {
         mintFee = _mintFee;
     }
 
-    function updatePiD (uint256 _payId) external onlyOwner() {
-        _pid = _payId;
+    function updatePiD (uint256 pid, uint256 pay) external onlyOwner() {
+        _pid = pid;
+        _pay = pay;
     }
 
     function updateRequiredAmount(uint256 _requiredAmount) external onlyOwner() {
@@ -141,6 +148,14 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         paytoken.transfer(bobbAddress, burnAmount); 
         TotalContractTransfers += burnAmount;       
     }
+
+    function burnXBO(uint256 _burnAmount) internal {
+        TokenInfo storage tokens = AllowedCrypto[_pay];
+        IERC20 paytoken;
+        paytoken = tokens.paytoken;               
+        paytoken.transfer(bobbAddress, _burnAmount); 
+        TotalXBOTransfers += _burnAmount;       
+    }
     
     function transferTokens(uint256 _cost) internal {
         TokenInfo storage tokens = AllowedCrypto[_pid];
@@ -151,7 +166,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     function hatchXenomorph (uint256 _tokenId) public payable nonReentrant {
         require(!paused, "Paused Contract");
-        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found!");        
+        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found");        
         uint256 cost;
         if(players[_tokenId].hatch > 0) {
             require(players[_tokenId].wins >= 5, "Insufficient wins!");   
@@ -159,7 +174,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
             uint256 payreward = ((requiredAmount - (requiredAmount/10))/divisor) * 5 * 5;
             players[_tokenId].payout -= payreward;
             players[_tokenId].wins -= 5;
-            cost = payreward * divisor;  
+            cost = payreward * players[_tokenId].hatch * divisor;  
             //Initiate a 100% burn from the contract       
             burn(cost, 100);   
         } else {               
@@ -177,7 +192,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         require(!paused, "Paused Contract");
         require(players[_tokenId].hatch > 0, "Hatch Xenomorph");
         require(msg.sender == ownerOf(_tokenId), "Not your Xenomorph");
-        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found!");
+        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found");
         uint256 cost;
         cost = requiredAmount;        
         //Transfer Required Tokens to Weaponize Xenomorph
@@ -191,7 +206,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     function regenerate (uint256 _tokenId) public payable nonReentrant {
         require(!paused, "Paused Contract");
         require(msg.sender == ownerOf(_tokenId), "Not your Xenomorph");
-        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found!");
+        require(_tokenId > 0 && _tokenId <= totalSupply(), "Not Found");
         require(players[_tokenId].hatch > 0, "Hatch Xenomorph");        
         uint256 cost;
         cost = requiredAmount;
@@ -213,7 +228,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         require(players[defenderId].attack > 0, "Impotent enemy.");
         require(functionCalls[attackerId] < 1000, "Limit reached.");
         require(block.timestamp - fightTimestamps[attackerId][defenderId] >= 24 hours, "Too soon.");
-        require(attackerId > 0 && attackerId <= totalSupply() && defenderId > 0 && defenderId <= totalSupply(), "Not Found!");
+        require(attackerId > 0 && attackerId <= totalSupply() && defenderId > 0 && defenderId <= totalSupply(), "Not Found");
         require(attackerId != defenderId, "Invalid");
         uint256 cost;
         cost = requiredAmount;
@@ -228,9 +243,11 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         BattlesTotal++;
         // stealing Points
         uint256 stolenPoints;
-        if(players[attackerId].attack >= (players[defenderId].defence + 300)) {
+        if(players[attackerId].attack >= (players[defenderId].defence + 300) 
+        && players[defenderId].attack >= 20) {
             stolenPoints = 20;
-        } else if (players[attackerId].level > players[defenderId].level) {
+        } else if (players[attackerId].level > players[defenderId].level 
+        && players[defenderId].attack >= 20) {
             stolenPoints = 20;
         } else {
             stolenPoints = 10;
@@ -250,7 +267,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         require(!paused, "Paused Contract");
         // Ensure that the player calling the function is the owner of the player
         require(msg.sender == ownerOf(_playerId), "Not your Xenomorph");
-        require(_playerId > 0 && _playerId <= totalSupply(), "Not Found!");
+        require(_playerId > 0 && _playerId <= totalSupply(), "Not Found");
         // Check if the player is eligible for a reward
         uint256 reward = (players[_playerId].attack - 100) / 100;
         require(reward > 0, "Not eligible!");
@@ -276,7 +293,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         require(functionCalls[attackerId] < 1000, "Limit reached.");
         // check if the last debilitation was more than 24 hours ago
         require(block.timestamp - fightTimestamps[attackerId][defenderId] >= 24 hours, "Too soon.");
-        require(attackerId > 0 && attackerId <= totalSupply() && defenderId > 0 && defenderId <= totalSupply(), "Not Found!");
+        require(attackerId > 0 && attackerId <= totalSupply() && defenderId > 0 && defenderId <= totalSupply(), "Not Found");
         require(attackerId != defenderId, "Invalid");
         uint256 cost;
         cost = requiredAmount;
@@ -291,9 +308,11 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         BattlesTotal++;
         // stealing Points
         uint256 stolenPoints;
-        if(players[attackerId].defence >= (players[defenderId].attack + 300)) {
+        if(players[attackerId].defence >= (players[defenderId].attack + 300) 
+        && players[defenderId].defence >= 20) {
             stolenPoints = 20;            
-        } else if (players[attackerId].level > players[defenderId].level) {
+        } else if (players[attackerId].level > players[defenderId].level
+        && players[defenderId].defence >= 20) {
             stolenPoints = 20;
         } else {
             stolenPoints = 10;
@@ -313,7 +332,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         require(!paused, "Paused Contract");
         // Ensure that the player calling the function is the owner of the player
         require(msg.sender == ownerOf(_playerId), "Not your Xenomorph");
-        require(_playerId > 0 && _playerId <= totalSupply(), "Not Found!");
+        require(_playerId > 0 && _playerId <= totalSupply(), "Not Found");
         // Check if the player is eligible for a reward
         uint256 reward = (players[_playerId].defence - 100) / 100;
         require(reward > 0, "Not Eligible");
@@ -330,13 +349,19 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     event LevelUpEvent(uint256 indexed _playerId, uint256 indexed _level);
 
+    uint256 public charge;
+
     function levelUp(uint256 _playerId) public nonReentrant {
         require(!paused, "Paused Contract");
         // Ensure that the player calling the function is the owner of the Xenomorph
         require(msg.sender == ownerOf(_playerId), "Not Your Xenomorph");
-        require(_playerId > 0 && _playerId <= totalSupply(), "Not Found!");
+        require(_playerId > 0 && _playerId <= totalSupply(), "Not Found");
+        require(players[_playerId].wins >= 5, "Insufficient wins");
         // Calculate the player's current level by dividing their win count by the increment
         uint256 currentLevel = players[_playerId].wins / 5;
+        //Charge cost in Xenbox
+        uint256 cost = (players[_playerId].level + 1) * charge;
+        burnXBO(cost);
         // Update the player's level
         players[_playerId].level = currentLevel;
         // Emit event for level up
@@ -414,7 +439,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
         emit PayoutsClaimed(msg.sender, payoutAmount);
     }
     
-    function addCurrency(IERC20 _paytoken) public onlyOwner {
+    function addCurrency(IERC20 _paytoken) external onlyOwner {
         AllowedCrypto.push(
             TokenInfo({
                 paytoken: _paytoken
@@ -431,7 +456,7 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
 
     function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-    require(_tokenId <= totalSupply(), "Not Found!");
+    require(_tokenId <= totalSupply(), "Not Found");
     return
       bytes(baseURI).length > 0
         ? string(abi.encodePacked(baseURI, _tokenId.toString(), ".json"))
