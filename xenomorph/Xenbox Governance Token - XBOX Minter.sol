@@ -12,9 +12,10 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract Xenbox is ERC20, Ownable, ReentrancyGuard {        
-        constructor(string memory _name, string memory _symbol, address _newGuard) 
+        constructor(string memory _name, string memory _symbol, address _xenomorph, address _newGuard) 
             ERC20(_name, _symbol)
         {
+            xenomorph = _xenomorph;
             guard = _newGuard;
         }
     using ABDKMath64x64 for uint256;
@@ -22,6 +23,7 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
 
     bool public paused = false;
     address private guard;
+    address public xenomorph;
     uint256 public CIRC_SUPPLY = 0;
     uint256 public MAX_SUPPLY = 5000000000 * 10 ** decimals();
     uint256 public TotalBurns;
@@ -32,7 +34,7 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
     }
 
     modifier onlyBurner() {
-        require(msg.sender == address(this), "Not authorized.");
+        require(msg.sender == xenomorph, "Not authorized.");
         _;
     }
 
@@ -76,6 +78,10 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
         require(paused, "Contract not paused.");
         paused = false;
         emit Unpause();
+    }
+
+    function setXenomorph (address _xenomorph) external onlyOwner {
+        xenomorph = _xenomorph;
     }
 
     function setGuard (address _newGuard) external onlyGuard {
