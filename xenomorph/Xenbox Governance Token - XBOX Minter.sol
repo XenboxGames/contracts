@@ -12,9 +12,10 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract Xenbox is ERC20, Ownable, ReentrancyGuard {        
-        constructor(string memory _name, string memory _symbol, address _newGuard) 
+        constructor(string memory _name, string memory _symbol, address xboAddress, address _newGuard) 
             ERC20(_name, _symbol)
         {
+            xbo = xboAddress;
             guard = _newGuard;
         }
     using ABDKMath64x64 for uint256;
@@ -22,11 +23,18 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
 
     bool public paused = false;
     address private guard;
+    address public xbo;
+
     uint256 public CIRC_SUPPLY = 0;
     uint256 public MAX_SUPPLY = 5000000000 * 10 ** decimals();
 
     modifier onlyGuard() {
         require(msg.sender == guard, "Not authorized.");
+        _;
+    }
+
+    modifier onlyBurner() {
+        require(msg.sender == xbo, "Not authorized.");
         _;
     }
 
@@ -43,10 +51,15 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
     }
 
     event burnEvent(uint256 indexed _amount);
-    function Burn(uint256 _amount) external onlyGuard {                
+    function Burn(uint256 _amount) external onlyBurner {                
         require(!paused, "Paused Contract");
        _burn(msg.sender, _amount);
        emit burnEvent(_amount);
+    }
+
+    function setXboAddress (address _xboAddress) external onlyOwner {
+        require(msg.sender == owner(), "Not Owner.");
+        xbo = _xboAddress;
     }
 
     event Pause();
