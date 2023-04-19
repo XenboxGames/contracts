@@ -24,7 +24,6 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
     bool public paused = false;
     address private guard;
     address public xenomorph;
-    uint256 public CIRC_SUPPLY = 0;
     uint256 public MAX_SUPPLY = 5000000000 * 10 ** decimals();
     uint256 public TotalBurns;
 
@@ -42,11 +41,10 @@ contract Xenbox is ERC20, Ownable, ReentrancyGuard {
     function mint(uint256 _multiplier) external onlyOwner {        
         require(!paused, "Paused Contract");
         require(_multiplier > 0, "Invalid Multiplier");
-        require(CIRC_SUPPLY < MAX_SUPPLY, "Max Minted");
+        require(totalSupply() < MAX_SUPPLY, "Max Minted");
         uint256 multiplier =  _multiplier * (1_000_000 * 10 ** decimals());
-        require(CIRC_SUPPLY + multiplier < MAX_SUPPLY, "Max Exceeded");
-        _mint(msg.sender, multiplier);  
-        CIRC_SUPPLY += multiplier;      
+        require(totalSupply() + multiplier < MAX_SUPPLY, "Max Exceeded");
+        _mint(msg.sender, multiplier);      
         emit mintEvent(multiplier);
     }
 
