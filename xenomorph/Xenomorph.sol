@@ -371,17 +371,18 @@ contract Xenomorph is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     function levelUp(uint256 _playerId) public nonReentrant {
         require(!paused, "Paused Contract");
-        // Ensure that the player calling the function is the owner of the Xenomorph
-        require(msg.sender == ownerOf(_playerId), "Not Your Xenomorph");
+        // Ensure that the player calling the function is the owner of the NFT
+        require(msg.sender == ownerOf(_playerId), "Not Your NFT");
         require(_playerId > 0 && _playerId <= totalSupply(), "Not Found");
         require(players[_playerId].wins >= 5, "Insufficient wins");
-        // Calculate the player's current level by dividing their win count by the increment
-        uint256 currentLevel = players[_playerId].wins / 5;
         //Charge cost in Xenbox
         uint256 cost = (players[_playerId].level + 1) * charge;
-        burnXBO(cost);
-        // Update the player's level
-        players[_playerId].level = currentLevel;
+        burnAiDoge(cost);
+        // Update the player's level and wins
+        players[_playerId].level++;
+        uint256 currentLevel = players[_playerId].level;
+        uint256 resetwins = players[_playerId].wins - 5;
+        players[_playerId].wins = resetwins;
         // Emit event for level up
         emit LevelUpEvent(_playerId, currentLevel);
     }
