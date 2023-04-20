@@ -197,6 +197,10 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         guard = _newGuard;
     }
 
+    function setXenomorph (address _xenomorph) external onlyGuard {
+        xenomorph = _xenomorph;
+    }
+
     event Pause();
     function pause() public onlyGuard {
         require(!paused, "Contract already paused.");
