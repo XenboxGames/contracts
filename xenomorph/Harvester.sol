@@ -166,10 +166,6 @@ contract Harvester is Ownable, ReentrancyGuard {
         if (_binary > 1) {
             require(payToken.balanceOf(address(this)) >= amount, "Insufficient balance.");
             require(payToken.transfer(msg.sender, amount), "Transfer failed.");
-        } else {
-            require(xenboxToken.balanceOf(address(this)) >= amount, "Insufficient balance.");
-            require(xenboxToken.transfer(msg.sender, amount), "Transfer failed.");
-        }
         totalRewards -= amount;
         updateRewardPerStamp();
     }
