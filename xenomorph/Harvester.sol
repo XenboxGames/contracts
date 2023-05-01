@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
+/**
+ * @title Incentivizer Contract
+ */
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-/**
- * @title Incentivizer Contract
- */
+
 contract Harvester is Ownable, ReentrancyGuard {
-    IERC20 public xenboxToken;
+    IERC20 public aigameToken;
     IERC20 public payToken;
     uint256 public totalRewards = 1;
     uint256 public totalClaimedRewards;
@@ -18,7 +19,7 @@ contract Harvester is Ownable, ReentrancyGuard {
     uint256 public numberOfParticipants = 0;
     uint256 public Duration = 1209600;
     uint256 public timeLock = 24 hours;
-    uint256 public TotalXenboxSent = 1;
+    uint256 public TotalaigameSent = 1;
     uint256 private divisor = 100 ether;
     address private guard; 
     bool public paused = false; 
@@ -32,21 +33,21 @@ contract Harvester is Ownable, ReentrancyGuard {
 
     struct Claim {
         uint256 eraAtBlock;
-        uint256 xenboxSent;
+        uint256 aigameSent;
         uint256 rewardsOwed;
     }
     
     event RewardAddedByDev(uint256 amount);
     event RewardClaimedByUser(address indexed user, uint256 amount);
-    event AddXenbox(address indexed user, uint256 amount);
-    event WithdrawXenbox(address indexed user, uint256 amount);
+    event Addaigame(address indexed user, uint256 amount);
+    event Withdrawaigame(address indexed user, uint256 amount);
     
     constructor(
-        address _xenboxToken,
+        address _aigameToken,
         address _payToken,
         address _newGuard
     ) {
-        xenboxToken = IERC20(_xenboxToken);
+        aigameToken = IERC20(_aigameToken);
         payToken = IERC20(_payToken);
         guard = _newGuard;
         startTime = block.timestamp;
@@ -64,13 +65,14 @@ contract Harvester is Ownable, ReentrancyGuard {
 
     modifier onlyClaimant() {             
         require(UserClaims[msg.sender] + timeLock < block.timestamp, "Timelocked.");
+        require(claimRewards[msg.sender].rewardsOwed > 0, "No rewards.");
         _;
     }
 
-    function addXenbox(uint256 _amount) public nonReentrant {
+    function addaigame(uint256 _amount) public nonReentrant {
         require(!paused, "Contract is paused.");
         require(_amount > 0, "Amount must be greater than zero.");
-        require(xenboxToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed.");
+        require(aigameToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed.");
 
         Claim storage claimData = claimRewards[msg.sender];
         uint256 currentBalance = balances[msg.sender];
@@ -86,27 +88,27 @@ contract Harvester is Ownable, ReentrancyGuard {
         }
     
         claimData.eraAtBlock = block.timestamp;
-        claimData.xenboxSent += _amount;
-        TotalXenboxSent += _amount;
+        claimData.aigameSent += _amount;
+        TotalaigameSent += _amount;
         updateRewardPerStamp();
-        emit AddXenbox(msg.sender, _amount);
+        emit Addaigame(msg.sender, _amount);
     }
 
     /**
-    * @dev Allows the user to withdraw their xenbox tokens
+    * @dev Allows the user to withdraw their aigame tokens
     */
-    function withdrawXenbox() public nonReentrant onlyAfterTimelock {
+    function withdrawaigame() public nonReentrant onlyAfterTimelock {
         require(!paused, "Contract already paused.");
-        require(balances[msg.sender] > 0, "No xenbox tokens to withdraw.");
-        uint256 xenboxAmount = balances[msg.sender];
-        require(xenboxToken.transfer(msg.sender, xenboxAmount), "Failed Transfer");  
+        require(balances[msg.sender] > 0, "No aigame tokens to withdraw.");
+        uint256 aigameAmount = balances[msg.sender];
+        require(aigameToken.transfer(msg.sender, aigameAmount), "Failed Transfer");  
         
         updateAllClaims();     
-         //Delete all allocations of xenbox
+         //Delete all allocations of aigame
         balances[msg.sender] = 0;
-        TotalXenboxSent -= xenboxAmount;
+        TotalaigameSent -= aigameAmount;
         Claim storage claimData = claimRewards[msg.sender];
-        claimData.xenboxSent = 0;
+        claimData.aigameSent = 0;
 
         updateRewardPerStamp();
 
@@ -115,7 +117,7 @@ contract Harvester is Ownable, ReentrancyGuard {
             entryMap[msg.sender] = 0; // reset the user's entry timestamp
         }
         
-        emit WithdrawXenbox(msg.sender, xenboxAmount);
+        emit Withdrawaigame(msg.sender, aigameAmount);
     }
 
     /**
@@ -136,20 +138,19 @@ contract Harvester is Ownable, ReentrancyGuard {
             Claim storage claimData = claimRewards[participant];
             uint256 currentTime = block.timestamp;
             uint256 period = block.timestamp - claimData.eraAtBlock;
-            uint256 rewardsAccrued = claimData.rewardsOwed + (rewardPerStamp * period * claimData.xenboxSent);
+            uint256 rewardsAccrued = claimData.rewardsOwed + (rewardPerStamp * period * claimData.aigameSent);
             claimData.rewardsOwed = rewardsAccrued;
             claimData.eraAtBlock = currentTime;
         }
     }
 
     function updateRewardPerStamp() internal {
-        rewardPerStamp = (totalRewards * divisor) / (TotalXenboxSent * Duration);
+        rewardPerStamp = (totalRewards * divisor) / (TotalaigameSent * Duration);
     }
 
     function claim() public nonReentrant onlyClaimant {  
         require(!paused, "Contract already paused."); 
-        updateAllClaims(); 
-        require(claimRewards[msg.sender].rewardsOwed > 0, "No rewards.");
+        updateAllClaims();     
         Claim storage claimData = claimRewards[msg.sender];
         uint256 rewards = claimData.rewardsOwed / divisor;
         require(payToken.transfer(msg.sender, rewards), "Transfer failed.");        
@@ -163,9 +164,8 @@ contract Harvester is Ownable, ReentrancyGuard {
 
     function withdraw(uint256 _binary, uint256 amount) external onlyOwner {
         require(amount > 0, "Amount must be greater than zero.");
-        if (_binary > 1) {
-            require(payToken.balanceOf(address(this)) >= amount, "Insufficient balance.");
-            require(payToken.transfer(msg.sender, amount), "Transfer failed.");
+        require(payToken.balanceOf(address(this)) >= amount, "Insufficient balance.");
+        require(payToken.transfer(msg.sender, amount), "Transfer failed.");
         totalRewards -= amount;
         updateRewardPerStamp();
     }
@@ -180,8 +180,8 @@ contract Harvester is Ownable, ReentrancyGuard {
         timeLock = _seconds;
     }
 
-    function setXenboxToken(address _xenboxToken) external onlyOwner {
-        xenboxToken = IERC20(_xenboxToken);
+    function setAiGameToken(address _aigameToken) external onlyOwner {
+        aigameToken = IERC20(_aigameToken);
     }
 
     function setPayToken(address _payToken) external onlyOwner {
