@@ -64,7 +64,6 @@ contract Harvester is Ownable, ReentrancyGuard {
 
     modifier onlyClaimant() {             
         require(UserClaims[msg.sender] + timeLock < block.timestamp, "Timelocked.");
-        require(claimRewards[msg.sender].rewardsOwed > 0, "No rewards.");
         _;
     }
 
@@ -149,7 +148,8 @@ contract Harvester is Ownable, ReentrancyGuard {
 
     function claim() public nonReentrant onlyClaimant {  
         require(!paused, "Contract already paused."); 
-        updateAllClaims();     
+        updateAllClaims(); 
+        require(claimRewards[msg.sender].rewardsOwed > 0, "No rewards.");
         Claim storage claimData = claimRewards[msg.sender];
         uint256 rewards = claimData.rewardsOwed / divisor;
         require(payToken.transfer(msg.sender, rewards), "Transfer failed.");        
